@@ -163,4 +163,81 @@
 		(i32.sub (get_local $x) (get_local $y))
 	)
 
+	;; Is move valid?
+	(func $isValidMove  (param $fromX i32) (param $fromY i32)
+						(param $toX i32) (param $toY i32) (result i32)
+		(local $player i32)
+		(local $target i32)
+
+		(set_local $player (call $getPiece (get_local $fromX (get_local $fromY))))
+		(set_local $target (call $getPiece (get_local $toX (get_local $toY))))
+
+		(if (result i32)
+			(block (result i32)
+				(i32.and
+					(call $validJumpDistance (get_local $fromY) (get_local $toY))
+					(i32.and
+						(call $isPlayersTurn (get_local $player))
+						;; Target must be unoccupied
+						(i32.eq (get_local $target) (i32.const 0))
+					)
+				)
+			)
+			(then (i32.const 1))
+			(else (i32.const 0))
+		)
+	)
+
+	;; Ensure travel is only 1 or 2 squares
+	(func $validJumpDistance (param $from i32) (param $to i32) (result)
+		(local $d i32)
+		(set_local $d
+			(if (result i32)
+				(i32.gt_s (get_local $to) (get_local $from))
+				(then (call $distance (get_local $to) (get_local $from)))
+				(else (call $distance (get_local $from) (get_local $to)))
+			)
+		)
+		(i32.le_u (get_local $d)
+			(i32.const 2)
+		)
+	)
+
+	;; Exported $move function to be called by the host
+	(func $move (param $fromX i32) (param $fromY i32)
+				(param $toX i32) (param $toY i32) (result i32)
+		(if (result i32)
+			(block (result i32)
+				(call $isValidMove (get_local $fromX) (get_local $fromY)
+									(get_local $toX) (get_local $toY))
+			)
+			(then
+				(call $do_move (get_local $fromX) (get_local $fromY)
+								 (get_local $toX) (get_local $yoY))
+			)
+			(else (i32.const 0))
+		)
+	)
+
+	;; Internal move function, performs actual move post-validation of target
+	;; Not handled:
+	;; - removing opponent piece during a jump
+	;; - detect win condition
+	(func $do_move (param $fromX i32) (param $fromY i32)
+				(param $toX i32) (param $toY i32) (result i32)
+		(set_local $curPiece i32)
+		(set_local $curPiece (call $getPiece (get_local $fromX) (get_local $fromY)))
+
+		(call $toggleTurn)
+		(call $setPiece (get_local $toX) (get_local $toY) (get_local $curPiece))
+		(call $setPiece (get_local $fromX) (get_local $fromY (i32.const 0)))
+		(if (call $shouldCrown (get_local $toY) (get_local $curPiece))
+			(then (call $crownPiece (get_local $toX) (get_local $toY)))
+		)
+		(call $notify_piece_moved (get_local $fromX) (get_local $fromY)
+								(get_local $toX) (get_local $toY)
+		)
+		(i32.const 1)
+	)
+
 )
