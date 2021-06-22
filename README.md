@@ -1,5 +1,8 @@
 # Learning WebAssembly by implementing a Checkers game
 
+
+[YouTube video](https://www.youtube.com/watch?v=w3c5Ry8hu64) screencast.
+
 Based on [Programming Web Assembly with Rust by Kevin Hoffman](https://pragprog.com/book/khrust/programming-webassembly-with-rust)
 
 
